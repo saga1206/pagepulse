@@ -55,7 +55,7 @@ Pulse" and "Task B – Prove it and explain it."
 ```
 pagepulse_project/
 ├── pagepulse_project/       # Django project (settings, urls, wsgi)
-├── audit/                   # the one app
+├── audit/                   # Django application
 │   ├── models.py            # AuditReport + AuditReportManager
 │   ├── serializers.py       # request validation + response shaping
 │   ├── utils.py             # fetching / parsing / SSRF logic (no Django request/response coupling)
@@ -84,10 +84,6 @@ The application is deployed on AWS EC2 using:
 - PostgreSQL
 - Django
 - WhiteNoise
-- Hosted on AWS EC2
-- Reverse proxy: Nginx
-- Application server: Gunicorn
-- Database: PostgreSQL
 
 
 
@@ -140,8 +136,7 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-Visit `http://127.0.0.1:8000/` for the frontend, or call the API directly
-(see below).
+Visit http://127.0.0.1:8000/ to access the application locally.
 
 ---
 
@@ -278,9 +273,6 @@ needs to change if the model's shape ever does.
 
 ## Given more time, I would...
 
-*(Use this section to prep your Loom walkthrough — Task B asks you to
-walk through one thing you'd change with another day. Pick whichever of
-these you can actually speak to confidently, or swap in your own.)*
 
 - Add a small allowlist/denylist override for edge-case hosts, rather
   than relying solely on IP-range classification — the NAT64 bug shows
@@ -296,7 +288,7 @@ these you can actually speak to confidently, or swap in your own.)*
 
 ## AI Usage Disclosure
 
-I used ChatGPT and Claude as development assistants throughout this project. I used them to discuss the overall architecture, clarify Django and DRF implementation details, troubleshoot deployment and configuration issues, review the code structure, and improve the project documentation. After each suggestion, I implemented the changes myself, tested the application, and refined the code where needed. I also completed the AWS EC2 deployment, configured PostgreSQL, Gunicorn, and Nginx, verified the API through manual testing and the test suite, and updated the documentation to reflect the final implementation.
+I used ChatGPT and Claude as development assistants throughout this project. I used them to discuss the overall architecture, clarify Django and DRF implementation details, troubleshoot deployment and configuration issues, review the code structure, and improve the project documentation. After each suggestion, I implemented the changes myself, tested the application, and refined the code where needed. I configured and deployed the application on AWS EC2 using PostgreSQL, Gunicorn, and Nginx, configured PostgreSQL, Gunicorn, and Nginx, verified the API through manual testing and the test suite, and updated the documentation to reflect the final implementation.
 
 ---
 
@@ -313,5 +305,13 @@ beautifulsoup4==4.12.3
 whitenoise==6.7.0
 gunicorn==22.0.0
 ```
+## Author
+
+**Sagar Kumar Singh**
+
+- GitHub: https://github.com/saga1206
+- Project: Page Pulse
+
+---
 
 Built for Digital Heroes Training Task &middot; digitalheroesco.com
