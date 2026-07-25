@@ -294,24 +294,9 @@ these you can actually speak to confidently, or swap in your own.)*
 
 ---
 
-## AI usage disclosure (draft — personalize before submitting)
+## AI Usage Disclosure
 
-*The brief requires this paragraph. Edit it to reflect what you actually
-did and understood — don't submit it verbatim if any part doesn't match
-your own experience building this.*
-
-> I used Claude (Anthropic) throughout this build: to scaffold the initial
-> Django/DRF architecture and PostgreSQL configuration, and as a pairing
-> partner while debugging two real issues I found through manual
-> testing — the SSRF check incorrectly blocking `github.com` and
-> `openai.com` (traced to how Python's `ipaddress` module classifies
-> IPv4-mapped and NAT64-embedded IPv6 addresses), and a follow-on
-> `TypeError` I introduced myself while manually applying that fix (a
-> dataclass field I'd pasted incorrectly). I verified every fix by running
-> the test suite and by manually re-testing both the previously-broken
-> public sites and known-internal addresses (`127.0.0.1`, the AWS
-> metadata endpoint) to confirm the SSRF protection wasn't weakened in the
-> process of fixing the false positive.
+I used ChatGPT and Claude as development assistants throughout this project. I used them to discuss the overall architecture, clarify Django and DRF implementation details, troubleshoot deployment and configuration issues, review the code structure, and improve the project documentation. After each suggestion, I implemented the changes myself, tested the application, and refined the code where needed. I also completed the AWS EC2 deployment, configured PostgreSQL, Gunicorn, and Nginx, verified the API through manual testing and the test suite, and updated the documentation to reflect the final implementation.
 
 ---
 
