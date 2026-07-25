@@ -1,0 +1,18 @@
+[Unit]
+Description=Page Pulse (gunicorn)
+After=network.target
+
+[Service]
+User=ubuntu
+Group=www-data
+WorkingDirectory=/home/ubuntu/pagepulse_project
+EnvironmentFile=/home/ubuntu/pagepulse_project/.env
+ExecStart=/home/ubuntu/pagepulse_project/venv/bin/gunicorn \
+    --workers 3 \
+    --timeout 60 \
+    --bind unix:/home/ubuntu/pagepulse_project/pagepulse.sock \
+    pagepulse_project.wsgi:application
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Page Pulse</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A1613'/%3E%3Cpath d='M2 17h5.5l2.5-8 4 16 3-13 2 5h11' fill='none' stroke='%233FF7B0' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ── Design tokens ──────────────────────────────────────────────
+     Concept: a clinical vitals monitor reading a webpage's health.
+     Palette models real telemetry displays — a distinct hue per
+     channel (mint = healthy trace, amber = warning, coral = alarm,
+     cyan = neutral readout) rather than one accent on near-black.
+     --mint brightened from the first pass for better contrast against
+     the panel background (was #52E3A4, still the same hue family). */
+  :root {
+    --bg:          #0A1613;
+    --panel:       #10201C;
+    --panel-raised:#132621;
+    --grid-line:   #1C302B;
+    --border:      #233A34;
+
+    --mint:        #3FF7B0;
+    --mint-dim:    #2E6B54;
+    --amber:       #F2B33D;
+    --coral:       #FF6B6B;
+    --cyan:        #5FD3E8;
+
+    --text:        #EAF6F1;
+    --text-muted:  #93A9A2;
+    --text-dim:    #56685F;
+
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-mono:    'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+    --font-body:    'Inter', -apple-system, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+      repeating-linear-gradient(
+        0deg,
+        rgba(63, 247, 176, 0.025) 0px,
+        rgba(63, 247, 176, 0.025) 1px,
+        transparent 1px,
+        transparent 3px
+      ),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+  }
+
+  /* ── Header / monitor chrome ─────────────────────────────────── */
+  header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 22px 32px 20px;
+  }
+  .chrome-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 950px;
+    margin: 0 auto;
+  }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .monitor-status {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .status-led {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--mint);
+    box-shadow: 0 0 0 0 rgba(63, 247, 176, 0.6);
+    animation: led-pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes led-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(63, 247, 176, 0.55); }
+    50%      { box-shadow: 0 0 0 5px rgba(63, 247, 176, 0); }
+  }
+  .wordmark-row {
+    max-width: 950px;
+    margin: 10px auto 0;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-size: 30px;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .tagline {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  /* ── Layout ──────────────────────────────────────────────────── */
+  main {
+    max-width: 950px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  .console {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 26px 26px 20px;
+  }
+
+  label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: 9px;
+  }
+  form { display: flex; gap: 10px; }
+  input[type=url] {
+    width: 100%;
+    flex: 1;
+    min-width: 0;
+    font-family: var(--font-mono);
+    font-size: 14.5px;
+    padding: 13px 15px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--text);
+  }
+  input[type=url]::placeholder { color: var(--text-dim); }
+  input[type=url]:focus-visible {
+    outline: 2px solid var(--mint);
+    outline-offset: 1px;
+    border-color: var(--mint);
+  }
+  input[aria-invalid="true"] { border-color: var(--coral); }
+
+  button {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0 20px;
+    background: var(--mint);
+    color: #08170F;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 47px;
+  }
+  button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+  button:disabled { opacity: 0.5; cursor: progress; }
+  button:hover:not(:disabled) { background: #6BFFC6; }
+  .btn-arrow { font-size: 11px; }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover:not(:disabled) { background: var(--panel-raised); color: var(--text); }
+
+  .btn-ghost {
+    height: 30px;
+    padding: 0 12px;
+    font-size: 10.5px;
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+  }
+  .btn-ghost:hover:not(:disabled) { background: var(--panel-raised); color: var(--mint); border-color: var(--mint-dim); }
+
+  /* ── Waveform trace (signature element) ─────────────────────── */
+  .trace-wrap {
+    margin-top: 18px;
+    overflow: hidden;
+    border-top: 1px solid var(--grid-line);
+    border-bottom: 1px solid var(--grid-line);
+    height: 42px;
+    position: relative;
+  }
+  .trace-wrap::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      90deg, var(--grid-line) 0px, var(--grid-line) 1px,
+      transparent 1px, transparent 40px
+    );
+    opacity: 0.5;
+    pointer-events: none;
+  }
+  .trace-track {
+    display: flex;
+    width: 200%;
+    height: 100%;
+    animation: trace-scroll 3.4s linear infinite;
+  }
+  .trace-wrap.scanning .trace-track { animation-duration: 0.9s; }
+  .trace-svg { width: 800px; height: 42px; flex: 0 0 800px; display: block; }
+  .trace-svg path {
+    fill: none;
+    stroke: var(--mint-dim);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke 0.5s ease;
+  }
+  .trace-wrap.scanning .trace-svg path { stroke: var(--cyan); }
+  .trace-wrap.verdict-good .trace-svg path { stroke: var(--mint); }
+  .trace-wrap.verdict-warn .trace-svg path { stroke: var(--amber); }
+  .trace-wrap.verdict-bad .trace-svg path  { stroke: var(--coral); }
+
+  @keyframes trace-scroll {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-800px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .trace-track { animation: none; }
+    .status-led { animation: none; }
+  }
+
+  #status-line {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    margin-top: 12px;
+    min-height: 16px;
+    color: var(--text-muted);
+  }
+
+  /* ── Empty state ─────────────────────────────────────────────── */
+  .empty-state {
+    margin-top: 22px;
+    padding: 22px 20px;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    text-align: center;
+    font-size: 13.5px;
+    color: var(--text-dim);
+  }
+
+  /* ── Report ──────────────────────────────────────────────────── */
+  .report { margin-top: 22px; }
+  .report-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--grid-line);
+    margin-bottom: 18px;
+  }
+  .report-head .target-line {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--text-muted);
+    word-break: break-all;
+  }
+  .report-head .target-line a {
+    color: var(--text);
+    font-weight: 500;
+    text-decoration: none;
+    border-bottom: 1px solid var(--mint-dim);
+  }
+  .report-head .target-line a:hover { border-bottom-color: var(--mint); color: var(--mint); }
+  .report-head .target-line a:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+  /* ── Audit summary checklist ────────────────────────────────── */
+  .summary {
+    background: var(--panel-raised);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 18px;
+  }
+  .summary .label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    margin-bottom: 9px;
+  }
+  .summary ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .summary li { font-size: 13px; display: flex; align-items: baseline; gap: 8px; }
+  .summary .mark { font-family: var(--font-mono); font-weight: 600; flex-shrink: 0; }
+  .summary li.ok .mark { color: var(--mint); }
+  .summary li.warn .mark { color: var(--amber); }
+
+  /* ── Title hero ─────────────────────────────────────────────── */
+  .title-hero {
+    margin-bottom: 14px;
+    padding: 16px 18px;
+    background: var(--panel-raised);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .title-hero .label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+  .title-hero .value {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.3;
+    word-break: break-word;
+  }
+  .title-hero .value.empty { color: var(--text-dim); font-family: var(--font-body); font-size: 15px; font-weight: 400; }
+
+  .meta-block {
+    margin-bottom: 14px;
+    padding: 14px 18px;
+    background: var(--panel-raised);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .meta-block .label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+  .meta-block .value { font-size: 14px; line-height: 1.55; color: var(--text); }
+  .meta-block .value.empty { color: var(--text-dim); font-style: italic; }
+
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .metric {
+    background: var(--panel-raised);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 15px;
+  }
+  .metric .label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    display: flex; align-items: center; gap: 6px;
+    margin: 0 0 6px;
+  }
+  .metric .value {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+    word-break: break-word;
+    font-variant-numeric: tabular-nums;
+  }
+  .dot {
+    width: 6px; height: 6px; border-radius: 50%; display: inline-block; flex-shrink: 0;
+    box-shadow: 0 0 6px 0 currentColor;
+  }
+  .dot.good { background: var(--mint); color: var(--mint); }
+  .dot.warn { background: var(--amber); color: var(--amber); }
+  .dot.bad  { background: var(--coral); color: var(--coral); }
+
+  .error-box {
+    margin-top: 22px;
+    padding: 16px 18px;
+    border: 1px solid var(--coral);
+    border-radius: 8px;
+    background: rgba(255, 107, 107, 0.08);
+    font-size: 13.5px;
+    color: var(--text);
+  }
+  .error-box .title {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--coral);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  footer {
+    max-width: 950px;
+    margin: 0 auto;
+    padding: 28px 24px 40px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--text-dim);
+  }
+  footer a { color: var(--text-muted); }
+  footer .stack-line { margin-top: 4px; font-size: 10.5px; color: var(--text-dim); opacity: 0.75; }
+
+  @media (max-width: 620px) {
+    header { padding: 18px 20px 16px; }
+    h1 { font-size: 24px; }
+    main { padding: 28px 16px 60px; }
+    .console { padding: 20px 18px 16px; }
+    form { flex-direction: column; }
+    button { justify-content: center; width: 100%; }
+    .metric-grid { grid-template-columns: 1fr 1fr; }
+    .report-head { flex-direction: column; }
+  }
+  @media (max-width: 400px) {
+    .metric-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="chrome-row">
+    <div class="eyebrow">Digital Heroes / Internship Task Kit</div>
+    <div class="monitor-status"><span class="status-led" aria-hidden="true"></span>Monitor online</div>
+  </div>
+  <div class="wordmark-row">
+    <h1>Page Pulse</h1>
+    <span class="tagline">— vitals for any webpage</span>
+  </div>
+</header>
+
+<main>
+  <div class="console">
+    <form id="audit-form" novalidate>
+      <div style="flex:1">
+        <label for="url-input">Target URL</label>
+        <input
+          type="url"
+          id="url-input"
+          name="url"
+          placeholder="https://example.com"
+          autocomplete="url"
+          inputmode="url"
+          required
+        >
+      </div>
+      <button type="submit" id="submit-btn" style="align-self: flex-end;">
+        <span class="btn-arrow">▶</span> Run Audit
+      </button>
+      <button type="button" id="reset-btn" class="btn-secondary" style="align-self: flex-end;">
+        Reset
+      </button>
+    </form>
+
+    <div class="trace-wrap" id="trace-wrap">
+      <div class="trace-track">
+        <svg class="trace-svg" viewBox="0 0 800 42" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0,21 L120,21 L138,21 L148,4 L158,37 L166,14 L174,21 L320,21
+                   L440,21 L458,21 L468,4 L478,37 L486,14 L494,21 L640,21
+                   L760,21 L778,21 L788,4 L798,21" />
+        </svg>
+        <svg class="trace-svg" viewBox="0 0 800 42" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0,21 L120,21 L138,21 L148,4 L158,37 L166,14 L174,21 L320,21
+                   L440,21 L458,21 L468,4 L478,37 L486,14 L494,21 L640,21
+                   L760,21 L778,21 L788,4 L798,21" />
+        </svg>
+      </div>
+    </div>
+
+    <div id="status-line" role="status" aria-live="polite">Awaiting target — enter a URL and run a scan.</div>
+    <div id="report-container" aria-live="polite"></div>
+  </div>
+</main>
+
+<footer>
+  Built for Digital Heroes Training Task &middot;
+  <a href="https://digitalheroesco.com" target="_blank" rel="noopener">digitalheroesco.com</a>
+  <div class="stack-line">Built with Django REST Framework &bull; PostgreSQL &bull; BeautifulSoup</div>
+</footer>
+
+<script>
+const form = document.getElementById('audit-form');
+const input = document.getElementById('url-input');
+const btn = document.getElementById('submit-btn');
+const resetBtn = document.getElementById('reset-btn');
+const statusLine = document.getElementById('status-line');
+const container = document.getElementById('report-container');
+const traceWrap = document.getElementById('trace-wrap');
+
+const IDLE_STATUS_TEXT = 'Awaiting target — enter a URL and run a scan.';
+const EMPTY_STATE_HTML = `<div class="empty-state">Enter a URL above to analyze its structure and metadata.</div>`;
+
+const FRIENDLY_ERRORS = {
+  invalid_url: "That doesn't look like a valid URL. Make sure it starts with http:// or https://.",
+  blocked_address: "Signal blocked — this address points to a private or internal network and can't be scanned.",
+  too_many_redirects: "This page redirected too many times to follow.",
+  timeout: "The page took too long to respond.",
+  non_html_response: "That URL didn't return an HTML page.",
+  unreachable: "Couldn't reach that URL — check the address and try again.",
+  internal_error: "Something went wrong on our end. Please try again.",
+  network_error: "Couldn't reach the audit service. Check your connection and try again.",
+};
+
+let lastReport = null;
+
+// Anything that came back from the audited page itself (title, meta
+// description) is untrusted content and must never be placed into
+// innerHTML unescaped — an audited page could otherwise smuggle a
+// <script> tag into its own <title> and have it execute here.
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str == null ? '' : String(str);
+  return div.innerHTML;
+}
+
+function formatLatency(ms) {
+  if (ms >= 1000) return (ms / 1000).toFixed(2) + ' s';
+  return Math.round(ms) + ' ms';
+}
+
+function formatH1(count) {
+  if (count === 0) return 'None found';
+  if (count === 1) return '1 H1 tag';
+  return `${count} H1 tags`;
+}
+
+function formatAlt(missing, total) {
+  return `${missing} of ${total} missing`;
+}
+
+function statusFor(kind, value) {
+  if (kind === 'h1') return value === 1 ? 'good' : (value === 0 ? 'bad' : 'warn');
+  if (kind === 'alt') return value === 0 ? 'good' : (value <= 3 ? 'warn' : 'bad');
+  if (kind === 'meta') return value ? 'good' : 'warn';
+  if (kind === 'status') return value < 400 ? 'good' : 'bad';
+  return 'good';
+}
+
+function overallVerdict(r) {
+  if (r.http_status >= 400) return 'bad';
+  if (!r.meta_description || r.h1_count !== 1 || r.images_missing_alt > 3) return 'warn';
+  return 'good';
+}
+
+function setTraceState(state) {
+  traceWrap.classList.remove('scanning', 'verdict-good', 'verdict-warn', 'verdict-bad');
+  if (state) traceWrap.classList.add(state);
+}
+
+function metric(label, value, dotClass) {
+  return `<div class="metric">
+    <div class="label"><span class="dot ${dotClass}" aria-hidden="true"></span>${label}</div>
+    <div class="value">${value}</div>
+  </div>`;
+}
+
+function buildSummary(r) {
+  const reachable = r.http_status < 400;
+  return [
+    { ok: reachable, text: reachable ? 'Page reachable' : `Server responded with HTTP ${r.http_status}` },
+    { ok: true, text: 'HTML detected' },
+    { ok: r.h1_count === 1, text: r.h1_count === 1 ? '1 H1 tag found' : (r.h1_count === 0 ? 'No H1 tag found' : `${r.h1_count} H1 tags found (1 is recommended)`) },
+    { ok: !!r.meta_description, text: r.meta_description ? 'Meta description present' : 'Meta description missing' },
+    { ok: r.images_missing_alt === 0, text: r.images_missing_alt === 0 ? 'All images have alt text' : `${r.images_missing_alt} image(s) missing alt text` },
+  ];
+}
+
+function renderSummary(r) {
+  const items = buildSummary(r)
+    .map(c => `<li class="${c.ok ? 'ok' : 'warn'}"><span class="mark">${c.ok ? '✓' : '⚠'}</span>${escapeHtml(c.text)}</li>`)
+    .join('');
+  return `<div class="summary">
+    <div class="label">Audit Summary</div>
+    <ul>${items}</ul>
+  </div>`;
+}
+
+function renderReport(r) {
+  lastReport = r;
+  const safeUrl = escapeHtml(r.url);
+  const safeTitle = r.title ? escapeHtml(r.title) : null;
+  const safeMeta = r.meta_description ? escapeHtml(r.meta_description) : null;
+
+  container.innerHTML = `
+    <div class="report">
+      <div class="report-head">
+        <div class="target-line">Scan target — <a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${safeUrl}</a></div>
+        <button type="button" id="copy-json-btn" class="btn-ghost">Copy JSON</button>
+      </div>
+
+      ${renderSummary(r)}
+
+      <div class="title-hero">
+        <div class="label">Page Title</div>
+        <div class="value ${safeTitle ? '' : 'empty'}">${safeTitle ? safeTitle : '(none found)'}</div>
+      </div>
+
+      <div class="meta-block">
+        <div class="label">Meta Description</div>
+        <div class="value ${safeMeta ? '' : 'empty'}">${safeMeta ? safeMeta : 'Not found'}</div>
+      </div>
+
+      <div class="metric-grid">
+        ${metric('HTTP status', r.http_status, statusFor('status', r.http_status))}
+        ${metric('Latency', formatLatency(r.response_time_ms), 'good')}
+        ${metric('H1 tags', formatH1(r.h1_count), statusFor('h1', r.h1_count))}
+        ${metric('Alt text', formatAlt(r.images_missing_alt, r.images_total), statusFor('alt', r.images_missing_alt))}
+        ${metric('Word count', r.word_count, 'good')}
+      </div>
+    </div>`;
+
+  container.querySelector('.report').setAttribute('tabindex', '-1');
+  container.querySelector('.report').focus();
+
+  document.getElementById('copy-json-btn').addEventListener('click', async () => {
+    const btnEl = document.getElementById('copy-json-btn');
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(lastReport, null, 2));
+      btnEl.textContent = 'Copied ✓';
+    } catch (err) {
+      btnEl.textContent = 'Copy failed';
+    }
+    setTimeout(() => { btnEl.textContent = 'Copy JSON'; }, 1600);
+  });
+}
+
+function renderError(errPayload) {
+  lastReport = null;
+  const friendly = FRIENDLY_ERRORS[errPayload.error] || errPayload.detail || 'Something went wrong.';
+  container.innerHTML = `
+    <div class="error-box" tabindex="-1">
+      <span class="title">Scan failed</span>${escapeHtml(friendly)}
+    </div>`;
+  container.querySelector('.error-box').focus();
+}
+
+function getCookie(name) {
+  const match = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+  return match ? match.pop() : '';
+}
+
+function resetToIdle() {
+  input.value = '';
+  input.removeAttribute('aria-invalid');
+  statusLine.textContent = IDLE_STATUS_TEXT;
+  container.innerHTML = EMPTY_STATE_HTML;
+  setTraceState(null);
+  lastReport = null;
+  input.focus();
+}
+
+resetBtn.addEventListener('click', resetToIdle);
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const url = input.value.trim();
+
+  if (!url) {
+    input.setAttribute('aria-invalid', 'true');
+    statusLine.textContent = 'Enter a URL to scan.';
+    return;
+  }
+  input.removeAttribute('aria-invalid');
+
+  btn.disabled = true;
+  resetBtn.disabled = true;
+  statusLine.textContent = 'Reading vitals…';
+  container.innerHTML = '';
+  setTraceState('scanning');
+
+  try {
+    const res = await fetch('/api/audit/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken'),
+      },
+      body: JSON.stringify({ url }),
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      statusLine.textContent = `Audit complete — ${formatLatency(data.response_time_ms)}.`;
+      renderReport(data);
+      setTraceState('verdict-' + overallVerdict(data));
+    } else {
+      statusLine.textContent = `Scan failed (HTTP ${res.status}).`;
+      renderError(data);
+      setTraceState('verdict-bad');
+    }
+  } catch (err) {
+    statusLine.textContent = 'Network error.';
+    renderError({ error: 'network_error' });
+    setTraceState('verdict-bad');
+  } finally {
+    btn.disabled = false;
+    resetBtn.disabled = false;
+  }
+});
+
+// Initial empty state on page load.
+container.innerHTML = EMPTY_STATE_HTML;
+</script>
+
+</body>
+</html>
