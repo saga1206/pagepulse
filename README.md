@@ -5,8 +5,7 @@ returns HTTP status, response time, page title, meta description, H1 count,
 image alt-text coverage, and an approximate word count — with SSRF-safe
 fetching and every attempt (success or failure) persisted to PostgreSQL.
 
-Built for the Digital Heroes SDE internship task, "Task A – Build Page
-Pulse" and "Task B – Prove it and explain it."
+
 
 **Live URL:** http://3.25.97.249/
 
@@ -314,4 +313,3 @@ gunicorn==22.0.0
 
 ---
 
-Built for Digital Heroes Training Task &middot; digitalheroesco.com
